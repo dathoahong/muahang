@@ -2,5 +2,7 @@
   "name": "Quản Lý Đơn Đặt Hàng NCC & Đợt Giao Kho",
   "description": "Hệ thống quản lý đơn đặt hàng nhà cung cấp, theo dõi chia đợt nhận hàng về kho, tô xanh hoàn thành 100% và phân quyền mã PIN cho người quản lý.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

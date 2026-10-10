@@ -433,7 +433,7 @@ export default function App() {
       {/* Footer */}
       <footer className="mt-auto border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-4 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>Hệ thống Quản lý Đơn hàng NCC & Chia đợt Giao kho © 2026</span>
+          <span>Theo dõi mua hàng QVN · Quản lý đơn hàng NCC, tình trạng hàng hoá, thời gian giao hàng và số lượng © 2026</span>
           <div className="flex items-center gap-4">
             <span className="text-emerald-600 dark:text-emerald-400 font-medium">✓ Tự động tô xanh khi nhận đủ 100%</span>
             <span>·</span>

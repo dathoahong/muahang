@@ -2,6 +2,7 @@ import React from 'react';
 import { PurchaseOrder } from '../types';
 import { formatVND, formatDateVN } from '../utils/storage';
 import { Printer, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { QVNLogo } from './QVNLogo';
 
 interface PrintOrderViewProps {
   order: PurchaseOrder | null;
@@ -47,10 +48,13 @@ export const PrintOrderView: React.FC<PrintOrderViewProps> = ({ order, onClose }
       <div className="max-w-4xl mx-auto p-8 sm:p-12 text-slate-900">
         {/* Company Header */}
         <div className="flex justify-between items-start border-b-2 border-slate-900 pb-6 mb-6">
-          <div>
-            <h1 className="text-xl font-bold uppercase tracking-wider">HỆ THỐNG QUẢN LÝ KHO & CUNG ỨNG VẬT TƯ</h1>
-            <p className="text-xs text-slate-600 mt-1">Trụ sở: KCN Sài Đồng B, Long Biên, Hà Nội</p>
-            <p className="text-xs text-slate-600">Hotline điều phối: 1900 6868 · Email: procurement@logistics.vn</p>
+          <div className="flex items-center gap-4">
+            <QVNLogo className="w-14 h-14 shrink-0" />
+            <div>
+              <h1 className="text-xl font-bold uppercase tracking-wider text-slate-900">HỆ THỐNG THEO DÕI MUA HÀNG QVN</h1>
+              <p className="text-xs text-slate-600 mt-1">Trụ sở: KCN Sài Đồng B, Long Biên, Hà Nội</p>
+              <p className="text-xs text-slate-600">Hotline điều phối: 1900 6868 · Email: muahang@qvn.com.vn</p>
+            </div>
           </div>
           <div className="text-right">
             <h2 className="text-xl font-extrabold font-mono text-indigo-900">{order.poNumber}</h2>

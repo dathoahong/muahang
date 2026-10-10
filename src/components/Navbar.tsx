@@ -1,6 +1,5 @@
 import React from 'react';
 import { 
-  Boxes, 
   Lock, 
   Unlock, 
   Plus, 
@@ -11,6 +10,7 @@ import {
   KeyRound,
   FileSpreadsheet
 } from 'lucide-react';
+import { QVNLogo } from './QVNLogo';
 
 interface NavbarProps {
   isManager: boolean;
@@ -39,20 +39,20 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="flex items-center justify-between h-16">
           {/* Brand Logo & Name */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-xs shadow-emerald-500/30">
-              <Boxes className="w-6 h-6" />
+            <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center p-1 shadow-xs hover:scale-105 transition-transform">
+              <QVNLogo className="w-8 h-8" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-bold text-slate-900 dark:text-white tracking-tight text-base sm:text-lg">
-                  PO Smart Logistics
+                  Theo dõi mua hàng QVN
                 </span>
                 <span className="text-2xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
                   Kho & NCC
                 </span>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">
-                Quản lý đơn hàng NCC · Chia đợt giao nhận kho · Tô xanh 100%
+                Quản lý đơn hàng NCC, tình trạng hàng hoá, thời gian giao hàng và số lượng.
               </p>
             </div>
           </div>
