@@ -31,7 +31,7 @@ export const PrintOrderView: React.FC<PrintOrderViewProps> = ({ order, onClose }
             <ArrowLeft className="w-4 h-4" />
             <span>Quay lại</span>
           </button>
-          <span className="text-sm font-semibold">Xem bản in: {order.poNumber}</span>
+          <span className="text-sm font-semibold">Xem bản in: {order.poNumber} (Phiếu nhập kho)</span>
         </div>
 
         <button
@@ -51,9 +51,12 @@ export const PrintOrderView: React.FC<PrintOrderViewProps> = ({ order, onClose }
           <div className="flex items-center gap-4">
             <QVNLogo className="w-14 h-14 shrink-0" />
             <div>
-              <h1 className="text-xl font-bold uppercase tracking-wider text-slate-900">HỆ THỐNG THEO DÕI MUA HÀNG QVN</h1>
-              <p className="text-xs text-slate-600 mt-1">Trụ sở: KCN Sài Đồng B, Long Biên, Hà Nội</p>
-              <p className="text-xs text-slate-600">Hotline điều phối: 1900 6868 · Email: muahang@qvn.com.vn</p>
+              <h1 className="text-xl font-bold uppercase tracking-wider text-slate-900">
+                CÔNG TY TNHH SẢN PHẨM VÀ DỊCH VỤ Q VIỆT NAM
+              </h1>
+              <p className="text-xs text-slate-600 mt-1">
+                Địa chỉ: Lô A, Khu Công nghiệp Lộc An - Bình Sơn, Xã Long Thành, Tỉnh Đồng Nai
+              </p>
             </div>
           </div>
           <div className="text-right">
@@ -69,7 +72,7 @@ export const PrintOrderView: React.FC<PrintOrderViewProps> = ({ order, onClose }
 
         {/* Title */}
         <div className="text-center my-6">
-          <h2 className="text-2xl font-bold uppercase tracking-wide">ĐƠN ĐẶT HÀNG & PHIẾU ĐỐI SOÁT GIAO NHẬN KHO</h2>
+          <h2 className="text-2xl font-bold uppercase tracking-wide">PHIẾU NHẬP KHO</h2>
           <p className="text-xs text-slate-600 mt-1">
             (Kèm bảng kê chia đợt nhận hàng thực tế tại kho)
           </p>

@@ -11,10 +11,12 @@ import {
   PlusCircle, 
   Clock, 
   PackageCheck,
-  AlertCircle
+  AlertCircle,
+  FileSpreadsheet
 } from 'lucide-react';
 import { PurchaseOrder } from '../types';
 import { formatVND, formatDateVN, formatDateTimeVN } from '../utils/storage';
+import { exportSingleOrderToExcel } from '../utils/excel';
 
 interface OrderDetailsModalProps {
   isOpen: boolean;
@@ -82,6 +84,15 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => exportSingleOrderToExcel(order)}
+              className="px-3 py-1.5 text-xs font-medium bg-white/10 hover:bg-white/20 rounded-lg flex items-center gap-1.5 transition-colors text-white"
+              title="Xuất đơn hàng này ra file Excel (.xlsx)"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-300" />
+              <span className="hidden sm:inline">Xuất Excel</span>
+            </button>
             <button
               type="button"
               onClick={() => onPrint(order)}

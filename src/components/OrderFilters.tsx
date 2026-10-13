@@ -12,6 +12,8 @@ interface OrderFiltersProps {
   onStatusFilterChange: (status: 'all' | 'completed' | 'delivering' | 'pending') => void;
   sortBy: string;
   onSortByChange: (sort: string) => void;
+  onExportExcel?: () => void;
+  onOpenImportExcel?: () => void;
 }
 
 export const OrderFilters: React.FC<OrderFiltersProps> = ({
@@ -24,6 +26,8 @@ export const OrderFilters: React.FC<OrderFiltersProps> = ({
   onStatusFilterChange,
   sortBy,
   onSortByChange,
+  onExportExcel,
+  onOpenImportExcel,
 }) => {
   return (
     <div className="bg-white dark:bg-slate-800/80 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 shadow-2xs mb-6 space-y-3">
@@ -83,58 +87,84 @@ export const OrderFilters: React.FC<OrderFiltersProps> = ({
         </div>
       </div>
 
-      {/* Status Segmented Control Buttons */}
-      <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100 dark:border-slate-700/60">
-        <button
-          type="button"
-          onClick={() => onStatusFilterChange('all')}
-          className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-            statusFilter === 'all'
-              ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700'
-          }`}
-        >
-          Tất cả đơn
-        </button>
+      {/* Status Segmented Control Buttons & Quick Excel Actions */}
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100 dark:border-slate-700/60">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => onStatusFilterChange('all')}
+            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+              statusFilter === 'all'
+                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700'
+            }`}
+          >
+            Tất cả đơn
+          </button>
 
-        <button
-          type="button"
-          onClick={() => onStatusFilterChange('completed')}
-          className={`px-3 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors ${
-            statusFilter === 'completed'
-              ? 'bg-emerald-600 text-white shadow-xs ring-1 ring-emerald-500'
-              : 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 border border-emerald-200 dark:border-emerald-800'
-          }`}
-        >
-          <CheckCircle2 className="w-3.5 h-3.5" />
-          <span>✓ Đã giao đủ 100% (Tô xanh)</span>
-        </button>
+          <button
+            type="button"
+            onClick={() => onStatusFilterChange('completed')}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors ${
+              statusFilter === 'completed'
+                ? 'bg-emerald-600 text-white shadow-xs ring-1 ring-emerald-500'
+                : 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 border border-emerald-200 dark:border-emerald-800'
+            }`}
+          >
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            <span>✓ Đã giao đủ 100% (Tô xanh)</span>
+          </button>
 
-        <button
-          type="button"
-          onClick={() => onStatusFilterChange('delivering')}
-          className={`px-3 py-1.5 text-xs font-medium rounded-lg flex items-center gap-1.5 transition-colors ${
-            statusFilter === 'delivering'
-              ? 'bg-amber-600 text-white shadow-xs'
-              : 'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 border border-amber-200 dark:border-amber-800'
-          }`}
-        >
-          <Truck className="w-3.5 h-3.5" />
-          <span>Đang giao đợt dở dang</span>
-        </button>
+          <button
+            type="button"
+            onClick={() => onStatusFilterChange('delivering')}
+            className={`px-3 py-1.5 text-xs font-medium rounded-lg flex items-center gap-1.5 transition-colors ${
+              statusFilter === 'delivering'
+                ? 'bg-amber-600 text-white shadow-xs'
+                : 'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 border border-amber-200 dark:border-amber-800'
+            }`}
+          >
+            <Truck className="w-3.5 h-3.5" />
+            <span>Đang giao đợt dở dang</span>
+          </button>
 
-        <button
-          type="button"
-          onClick={() => onStatusFilterChange('pending')}
-          className={`px-3 py-1.5 text-xs font-medium rounded-lg flex items-center gap-1.5 transition-colors ${
-            statusFilter === 'pending'
-              ? 'bg-slate-700 text-white shadow-xs'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700'
-          }`}
-        >
-          <Clock className="w-3.5 h-3.5" />
-          <span>Chờ giao (0%)</span>
-        </button>
+          <button
+            type="button"
+            onClick={() => onStatusFilterChange('pending')}
+            className={`px-3 py-1.5 text-xs font-medium rounded-lg flex items-center gap-1.5 transition-colors ${
+              statusFilter === 'pending'
+                ? 'bg-slate-700 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700'
+            }`}
+          >
+            <Clock className="w-3.5 h-3.5" />
+            <span>Chờ giao (0%)</span>
+          </button>
+        </div>
+
+        {/* Excel buttons right side */}
+        <div className="flex items-center gap-2">
+          {onOpenImportExcel && (
+            <button
+              type="button"
+              onClick={onOpenImportExcel}
+              className="px-2.5 py-1.5 text-xs font-medium text-emerald-700 hover:text-emerald-800 dark:text-emerald-300 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 rounded-lg border border-emerald-200 dark:border-emerald-800/80 transition-colors flex items-center gap-1"
+              title="Nhập đơn hàng từ file Excel"
+            >
+              <span>+ Nhập Excel</span>
+            </button>
+          )}
+          {onExportExcel && (
+            <button
+              type="button"
+              onClick={onExportExcel}
+              className="px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:text-slate-900 dark:text-slate-200 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-lg transition-colors flex items-center gap-1"
+              title="Xuất dữ liệu đơn hàng ra file Excel"
+            >
+              <span>Xuất Excel</span>
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

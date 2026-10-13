@@ -11,10 +11,12 @@ import {
   Printer, 
   Trash2, 
   Edit3,
-  Layers
+  Layers,
+  FileSpreadsheet
 } from 'lucide-react';
 import { PurchaseOrder } from '../types';
 import { formatVND, formatDateVN } from '../utils/storage';
+import { exportSingleOrderToExcel } from '../utils/excel';
 
 interface OrderCardProps {
   order: PurchaseOrder;
@@ -256,12 +258,22 @@ export const OrderCard: React.FC<OrderCardProps> = ({
               </button>
             )}
 
+            {/* Export single PO to Excel */}
+            <button
+              type="button"
+              onClick={() => exportSingleOrderToExcel(order)}
+              className="p-1.5 text-slate-500 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+              title="Xuất đơn hàng này ra file Excel (.xlsx)"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+            </button>
+
             {/* Print PO */}
             <button
               type="button"
               onClick={() => onPrintOrder(order)}
               className="p-1.5 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-              title="In phiếu đơn hàng / Phiếu đối soát"
+              title="In phiếu nhập kho"
             >
               <Printer className="w-4 h-4" />
             </button>

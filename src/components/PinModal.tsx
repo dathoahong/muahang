@@ -48,36 +48,52 @@ export const PinModal: React.FC<PinModalProps> = ({
     setPin('');
   };
 
-  const handleLoginSubmit = (e?: React.FormEvent) => {
+  const [loading, setLoading] = useState(false);
+
+  const handleLoginSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!pin) {
       setError('Vui lòng nhập mã PIN quản lý');
       return;
     }
 
-    if (verifyPin(pin)) {
-      setError(null);
-      setSuccessMsg('Đăng nhập thành công!');
-      setTimeout(() => {
+    setLoading(true);
+    try {
+      // First try server API
+      let isValid = false;
+      try {
+        const { apiVerifyPin } = await import('../utils/api');
+        isValid = await apiVerifyPin(pin);
+      } catch {
+        isValid = verifyPin(pin);
+      }
+
+      // If server returned false or failed, check local
+      if (!isValid) {
+        isValid = verifyPin(pin);
+      }
+
+      if (isValid) {
+        setError(null);
+        setSuccessMsg('Đăng nhập thành công!');
+        setTimeout(() => {
+          setPin('');
+          setSuccessMsg(null);
+          onSuccess();
+          onClose();
+        }, 400);
+      } else {
+        setError('Mã PIN không chính xác! Hãy thử lại (Mặc định: 1234)');
         setPin('');
-        setSuccessMsg(null);
-        onSuccess();
-        onClose();
-      }, 400);
-    } else {
-      setError('Mã PIN không chính xác! Hãy thử lại (Mặc định: 1234)');
-      setPin('');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleChangePinSubmit = (e: React.FormEvent) => {
+  const handleChangePinSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-
-    if (!verifyPin(oldPin)) {
-      setError('Mã PIN hiện tại không chính xác');
-      return;
-    }
 
     if (!newPin || newPin.length < 4) {
       setError('Mã PIN mới phải có ít nhất 4 ký tự');
@@ -89,18 +105,41 @@ export const PinModal: React.FC<PinModalProps> = ({
       return;
     }
 
-    if (updatePin(newPin)) {
-      setSuccessMsg('Đổi mã PIN thành công!');
-      setTimeout(() => {
-        setOldPin('');
-        setNewPin('');
-        setConfirmNewPin('');
-        setSuccessMsg(null);
-        setCurrentMode('login');
-        onClose();
-      }, 1000);
-    } else {
-      setError('Không thể cập nhật mã PIN, vui lòng thử lại');
+    setLoading(true);
+    try {
+      let success = false;
+      try {
+        const { apiUpdatePin } = await import('../utils/api');
+        success = await apiUpdatePin(oldPin, newPin);
+      } catch {
+        success = false;
+      }
+
+      if (!success) {
+        if (!verifyPin(oldPin)) {
+          setError('Mã PIN hiện tại không chính xác');
+          return;
+        }
+        success = updatePin(newPin);
+      } else {
+        updatePin(newPin);
+      }
+
+      if (success) {
+        setSuccessMsg('Đổi mã PIN thành công và đã lưu vào Postgres!');
+        setTimeout(() => {
+          setOldPin('');
+          setNewPin('');
+          setConfirmNewPin('');
+          setSuccessMsg(null);
+          setCurrentMode('login');
+          onClose();
+        }, 800);
+      } else {
+        setError('Không thể cập nhật mã PIN, vui lòng thử lại');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 

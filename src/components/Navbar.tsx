@@ -5,7 +5,6 @@ import {
   Plus, 
   Building2, 
   Package, 
-  RotateCcw, 
   ShieldCheck, 
   KeyRound,
   FileSpreadsheet
@@ -19,8 +18,9 @@ interface NavbarProps {
   onOpenCreateOrder: () => void;
   onOpenSuppliers: () => void;
   onOpenProducts: () => void;
-  onResetData: () => void;
   onChangePin: () => void;
+  onOpenImportExcel?: () => void;
+  onExportExcel?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -30,8 +30,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenCreateOrder,
   onOpenSuppliers,
   onOpenProducts,
-  onResetData,
   onChangePin,
+  onOpenImportExcel,
+  onExportExcel,
 }) => {
   return (
     <header className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-2xs">
@@ -60,7 +61,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Right Action Bar */}
           <div className="flex items-center gap-2 sm:gap-3">
             {/* Role Indicator Badge */}
-            <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors">
+            <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors">
               {isManager ? (
                 <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
@@ -71,6 +72,32 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <Lock className="w-3.5 h-3.5 text-slate-500" />
                   <span>Chế độ Xem (Chỉ xem trạng thái)</span>
                 </div>
+              )}
+            </div>
+
+            {/* Excel Import / Export Buttons */}
+            <div className="hidden md:flex items-center gap-1 border-r border-slate-200 dark:border-slate-800 pr-2">
+              {onOpenImportExcel && (
+                <button
+                  type="button"
+                  onClick={onOpenImportExcel}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 hover:text-emerald-800 dark:text-emerald-300 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/50 dark:hover:bg-emerald-900/50 rounded-lg border border-emerald-200 dark:border-emerald-800/80 transition-colors"
+                  title="Nhập danh sách đơn hàng hàng loạt từ file Excel"
+                >
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                  <span>Nhập Excel</span>
+                </button>
+              )}
+              {onExportExcel && (
+                <button
+                  type="button"
+                  onClick={onExportExcel}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  title="Xuất danh sách đơn hàng và lịch sử giao kho ra file Excel"
+                >
+                  <FileSpreadsheet className="w-4 h-4 text-slate-500" />
+                  <span>Xuất Excel</span>
+                </button>
               )}
             </div>
 
@@ -138,16 +165,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span>Đăng nhập mã PIN</span>
               </button>
             )}
-
-            {/* Reset sample data */}
-            <button
-              type="button"
-              onClick={onResetData}
-              className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              title="Khôi phục dữ liệu mẫu ban đầu"
-            >
-              <RotateCcw className="w-4 h-4" />
-            </button>
           </div>
         </div>
       </div>

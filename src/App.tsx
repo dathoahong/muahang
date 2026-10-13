@@ -21,8 +21,22 @@ import {
   getIsManagerLoggedIn,
   setManagerLoggedIn,
   addDeliveryBatchToOrder,
-  resetToSampleData,
 } from './utils/storage';
+import {
+  fetchDbHealth,
+  apiFetchOrders,
+  apiSaveOrder,
+  apiDeleteOrder,
+  apiAddDeliveryBatch,
+  apiFetchSuppliers,
+  apiSaveSuppliers,
+  apiFetchProducts,
+  apiSaveProducts,
+  DbHealthStatus,
+} from './utils/api';
+import { VercelPostgresGuideModal } from './components/VercelPostgresGuideModal';
+import { ImportExcelModal } from './components/ImportExcelModal';
+import { exportOrdersToExcel } from './utils/excel';
 import { 
   CheckCircle2, 
   Sparkles, 
@@ -30,7 +44,10 @@ import {
   Plus, 
   Building2, 
   Inbox,
-  AlertTriangle 
+  AlertTriangle,
+  Database,
+  ExternalLink,
+  RefreshCw
 } from 'lucide-react';
 
 export default function App() {
@@ -39,6 +56,9 @@ export default function App() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [products, setProducts] = useState<ProductItem[]>([]);
   const [isManager, setIsManager] = useState<boolean>(false);
+  const [dbStatus, setDbStatus] = useState<DbHealthStatus | null>(null);
+  const [dbGuideOpen, setDbGuideOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Filter & Search State
   const [searchTerm, setSearchTerm] = useState('');
@@ -57,6 +77,7 @@ export default function App() {
   const [suppliersModalOpen, setSuppliersModalOpen] = useState(false);
   const [productsModalOpen, setProductsModalOpen] = useState(false);
   const [printOrder, setPrintOrder] = useState<PurchaseOrder | null>(null);
+  const [importExcelModalOpen, setImportExcelModalOpen] = useState(false);
 
   // Celebration Toast when an order reaches 100%
   const [celebrationToast, setCelebrationToast] = useState<{
@@ -65,12 +86,51 @@ export default function App() {
     supplierName: string;
   } | null>(null);
 
-  // Load from storage on mount
+  // Load from API on mount with offline fallback
+  const refreshAllData = async () => {
+    setIsRefreshing(true);
+    try {
+      const health = await fetchDbHealth();
+      setDbStatus(health);
+
+      const [ordRes, supRes, prodRes] = await Promise.all([
+        apiFetchOrders().catch(() => getOrders()),
+        apiFetchSuppliers().catch(() => getSuppliers()),
+        apiFetchProducts().catch(() => getProducts()),
+      ]);
+
+      if (ordRes && ordRes.length > 0) {
+        setOrders(ordRes);
+        saveOrders(ordRes);
+      } else {
+        setOrders(getOrders());
+      }
+
+      if (supRes && supRes.length > 0) {
+        setSuppliers(supRes);
+        saveSuppliers(supRes);
+      } else {
+        setSuppliers(getSuppliers());
+      }
+
+      if (prodRes && prodRes.length > 0) {
+        setProducts(prodRes);
+        saveProducts(prodRes);
+      } else {
+        setProducts(getProducts());
+      }
+    } catch {
+      setOrders(getOrders());
+      setSuppliers(getSuppliers());
+      setProducts(getProducts());
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   useEffect(() => {
-    setOrders(getOrders());
-    setSuppliers(getSuppliers());
-    setProducts(getProducts());
     setIsManager(getIsManagerLoggedIn());
+    refreshAllData();
   }, []);
 
   // Manager Auth Handlers
@@ -95,14 +155,26 @@ export default function App() {
   };
 
   // Order Handlers
-  const handleSaveNewOrder = (newOrder: PurchaseOrder) => {
-    const updated = [newOrder, ...orders];
-    setOrders(updated);
-    saveOrders(updated);
+  const handleSaveNewOrder = async (newOrder: PurchaseOrder) => {
+    try {
+      const saved = await apiSaveOrder(newOrder);
+      const updated = [saved, ...orders.filter((o) => o.id !== saved.id)];
+      setOrders(updated);
+      saveOrders(updated);
+    } catch {
+      const updated = [newOrder, ...orders];
+      setOrders(updated);
+      saveOrders(updated);
+    }
   };
 
-  const handleDeleteOrder = (orderId: string) => {
+  const handleDeleteOrder = async (orderId: string) => {
     if (confirm('Bạn có chắc muốn xóa đơn đặt hàng này không?')) {
+      try {
+        await apiDeleteOrder(orderId);
+      } catch (e) {
+        console.error('Delete order API error:', e);
+      }
       const updated = orders.filter((o) => o.id !== orderId);
       setOrders(updated);
       saveOrders(updated);
@@ -110,7 +182,7 @@ export default function App() {
   };
 
   // Add Delivery Batch to Order (Chia đợt giao kho)
-  const handleSubmitBatch = (
+  const handleSubmitBatch = async (
     orderId: string,
     batchData: {
       deliveryDate: string;
@@ -120,10 +192,17 @@ export default function App() {
       items: any[];
     }
   ) => {
-    const updatedOrder = addDeliveryBatchToOrder(orderId, batchData);
+    let updatedOrder: PurchaseOrder | null = null;
+    try {
+      updatedOrder = await apiAddDeliveryBatch(orderId, batchData);
+    } catch {
+      updatedOrder = addDeliveryBatchToOrder(orderId, batchData);
+    }
+
     if (updatedOrder) {
-      const freshOrders = getOrders();
-      setOrders(freshOrders);
+      const updated = orders.map((o) => (o.id === orderId ? updatedOrder! : o));
+      setOrders(updated);
+      saveOrders(updated);
 
       // Trigger Celebration Toast if order hit 100%
       if (updatedOrder.isFullyDelivered || updatedOrder.overallFulfillmentRate >= 100) {
@@ -137,7 +216,6 @@ export default function App() {
         }, 5000);
       }
 
-      // If details modal is open with this order, update it
       if (activeOrderForDetails?.id === orderId) {
         setActiveOrderForDetails(updatedOrder);
       }
@@ -156,6 +234,7 @@ export default function App() {
     const updated = [...suppliers, newSup];
     setSuppliers(updated);
     saveSuppliers(updated);
+    apiSaveSuppliers([newSup]).catch((e) => console.error('Save supplier API error:', e));
     return newSup;
   };
 
@@ -176,19 +255,55 @@ export default function App() {
     const updated = [...products, newProd];
     setProducts(updated);
     saveProducts(updated);
+    apiSaveProducts([newProd]).catch((e) => console.error('Save product API error:', e));
     return newProd;
   };
 
-  const handleResetData = () => {
-    if (confirm('Khôi phục toàn bộ danh sách đơn hàng, nhà cung cấp và mặt hàng mẫu ban đầu?')) {
-      resetToSampleData();
-      setOrders(getOrders());
-      setSuppliers(getSuppliers());
-      setProducts(getProducts());
-      setStatusFilter('all');
-      setSearchTerm('');
-      setSelectedSupplierId('');
+  // Excel Export and Import Handlers
+  const handleExportExcel = () => {
+    const dataToExport = filteredOrders.length > 0 ? filteredOrders : orders;
+    exportOrdersToExcel(dataToExport);
+  };
+
+  const handleOpenImportExcel = () => {
+    requireManagerAuth(() => setImportExcelModalOpen(true));
+  };
+
+  const handleImportSuccess = async (importedOrders: PurchaseOrder[]) => {
+    for (const o of importedOrders) {
+      try {
+        await apiSaveOrder(o);
+      } catch (err) {
+        console.error('Lỗi lưu đơn import:', err);
+      }
     }
+
+    // Tự động bổ sung các nhà cung cấp mới vào danh bạ
+    const newSuppliersMap: Record<string, Supplier> = {};
+    importedOrders.forEach((o) => {
+      const exists = suppliers.some(
+        (s) => s.id === o.supplierId || s.name.toLowerCase() === o.supplierName.toLowerCase()
+      );
+      if (!exists && !newSuppliersMap[o.supplierName]) {
+        newSuppliersMap[o.supplierName] = {
+          id: o.supplierId,
+          code: `NCC-${Math.floor(100 + Math.random() * 900)}`,
+          name: o.supplierName,
+          phone: o.supplierPhone || '---',
+          category: 'Tổng hợp',
+        };
+      }
+    });
+
+    const newSuppliersList = Object.values(newSuppliersMap);
+    if (newSuppliersList.length > 0) {
+      const updatedSuppliers = [...suppliers, ...newSuppliersList];
+      setSuppliers(updatedSuppliers);
+      saveSuppliers(updatedSuppliers);
+      apiSaveSuppliers(updatedSuppliers).catch(console.error);
+    }
+
+    await refreshAllData();
   };
 
   // Filter and Sort Orders
@@ -257,15 +372,70 @@ export default function App() {
         onOpenCreateOrder={() => requireManagerAuth(() => setCreateOrderModalOpen(true))}
         onOpenSuppliers={() => setSuppliersModalOpen(true)}
         onOpenProducts={() => setProductsModalOpen(true)}
-        onResetData={handleResetData}
         onChangePin={() => {
           setPinModalMode('change');
           setPinModalOpen(true);
         }}
+        onOpenImportExcel={handleOpenImportExcel}
+        onExportExcel={handleExportExcel}
       />
 
       {/* Main Content Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Database Storage Banner */}
+        <div className="mb-4 p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+          <div className="flex items-center gap-2.5">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+              dbStatus?.connected
+                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                : 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300'
+            }`}>
+              <Database className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 text-xs font-semibold">
+                <span>Nơi lưu trữ dữ liệu:</span>
+                {dbStatus?.connected ? (
+                  <span className="text-emerald-700 dark:text-emerald-300 flex items-center gap-1 font-bold">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Vercel Postgres (Đã kết nối qua {dbStatus.envSource})
+                  </span>
+                ) : (
+                  <span className="text-amber-700 dark:text-amber-300 font-medium">
+                    Bộ nhớ dự phòng (Chưa gắn DATABASE_URL trên Vercel)
+                  </span>
+                )}
+              </div>
+              <p className="text-2xs text-slate-500 dark:text-slate-400">
+                {dbStatus?.connected
+                  ? 'Đơn hàng, các đợt giao kho và tài khoản quản lý được ghi trực tiếp vào Vercel Postgres, giữ vĩnh viễn khi redeploy.'
+                  : 'Dữ liệu đang tạm lưu. Hãy liên kết Vercel Postgres theo 4 bước để lưu trữ bền vững vĩnh viễn.'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={refreshAllData}
+              disabled={isRefreshing}
+              className="px-2.5 py-1.5 text-xs text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors flex items-center gap-1 border border-slate-200 dark:border-slate-700"
+              title="Đồng bộ lại từ Postgres"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span className="text-2xs">Đồng bộ</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setDbGuideOpen(true)}
+              className="px-3 py-1.5 text-xs font-medium text-indigo-700 dark:text-indigo-300 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 rounded-xl border border-indigo-200 dark:border-indigo-800 transition-colors flex items-center gap-1"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              <span>Hướng dẫn Vercel Postgres</span>
+            </button>
+          </div>
+        </div>
+
         {/* Role Banner Notification (for Viewers) */}
         {!isManager && (
           <div className="mb-5 p-3.5 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
@@ -339,6 +509,8 @@ export default function App() {
           onStatusFilterChange={setStatusFilter}
           sortBy={sortBy}
           onSortByChange={setSortBy}
+          onOpenImportExcel={handleOpenImportExcel}
+          onExportExcel={handleExportExcel}
         />
 
         {/* Active Filter Indicator */}
@@ -494,6 +666,7 @@ export default function App() {
         onSaveSuppliers={(updated) => {
           setSuppliers(updated);
           saveSuppliers(updated);
+          apiSaveSuppliers(updated).catch((e) => console.error('Save suppliers error:', e));
         }}
         isManager={isManager}
       />
@@ -506,6 +679,7 @@ export default function App() {
         onSaveProducts={(updated) => {
           setProducts(updated);
           saveProducts(updated);
+          apiSaveProducts(updated).catch((e) => console.error('Save products error:', e));
         }}
         isManager={isManager}
       />
@@ -517,6 +691,22 @@ export default function App() {
           onClose={() => setPrintOrder(null)}
         />
       )}
+
+      {/* Vercel Postgres Setup Guide Modal */}
+      <VercelPostgresGuideModal
+        isOpen={dbGuideOpen}
+        onClose={() => setDbGuideOpen(false)}
+        isConnected={Boolean(dbStatus?.connected)}
+      />
+
+      {/* Import Excel Modal */}
+      <ImportExcelModal
+        isOpen={importExcelModalOpen}
+        onClose={() => setImportExcelModalOpen(false)}
+        suppliers={suppliers}
+        products={products}
+        onImportSuccess={handleImportSuccess}
+      />
     </div>
   );
 }
