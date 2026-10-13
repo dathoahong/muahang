@@ -615,74 +615,86 @@ export default function App() {
       </footer>
 
       {/* Modals */}
-      <PinModal
-        isOpen={pinModalOpen}
-        onClose={() => setPinModalOpen(false)}
-        onSuccess={handleLoginSuccess}
-        mode={pinModalMode}
-      />
+      {pinModalOpen && (
+        <PinModal
+          isOpen={pinModalOpen}
+          onClose={() => setPinModalOpen(false)}
+          onSuccess={handleLoginSuccess}
+          mode={pinModalMode}
+        />
+      )}
 
-      <CreateOrderModal
-        isOpen={createOrderModalOpen}
-        onClose={() => setCreateOrderModalOpen(false)}
-        suppliers={suppliers}
-        products={products}
-        onSaveOrder={handleSaveNewOrder}
-        onQuickAddSupplier={handleQuickAddSupplier}
-        onQuickAddProduct={handleQuickAddProduct}
-      />
+      {createOrderModalOpen && (
+        <CreateOrderModal
+          isOpen={createOrderModalOpen}
+          onClose={() => setCreateOrderModalOpen(false)}
+          suppliers={suppliers}
+          products={products}
+          onSaveOrder={handleSaveNewOrder}
+          onQuickAddSupplier={handleQuickAddSupplier}
+          onQuickAddProduct={handleQuickAddProduct}
+        />
+      )}
 
-      <ReceiveBatchModal
-        isOpen={receiveBatchModalOpen}
-        order={activeOrderForBatch}
-        onClose={() => {
-          setReceiveBatchModalOpen(false);
-          setActiveOrderForBatch(null);
-        }}
-        onSubmit={handleSubmitBatch}
-      />
+      {receiveBatchModalOpen && activeOrderForBatch && (
+        <ReceiveBatchModal
+          isOpen={receiveBatchModalOpen}
+          order={activeOrderForBatch}
+          onClose={() => {
+            setReceiveBatchModalOpen(false);
+            setActiveOrderForBatch(null);
+          }}
+          onSubmit={handleSubmitBatch}
+        />
+      )}
 
-      <OrderDetailsModal
-        isOpen={detailsModalOpen}
-        order={activeOrderForDetails}
-        onClose={() => {
-          setDetailsModalOpen(false);
-          setActiveOrderForDetails(null);
-        }}
-        onReceiveBatch={(ord) => {
-          requireManagerAuth(() => {
-            setActiveOrderForBatch(ord);
-            setReceiveBatchModalOpen(true);
-          });
-        }}
-        onPrint={(ord) => setPrintOrder(ord)}
-        isManager={isManager}
-      />
+      {detailsModalOpen && activeOrderForDetails && (
+        <OrderDetailsModal
+          isOpen={detailsModalOpen}
+          order={activeOrderForDetails}
+          onClose={() => {
+            setDetailsModalOpen(false);
+            setActiveOrderForDetails(null);
+          }}
+          onReceiveBatch={(ord) => {
+            requireManagerAuth(() => {
+              setActiveOrderForBatch(ord);
+              setReceiveBatchModalOpen(true);
+            });
+          }}
+          onPrint={(ord) => setPrintOrder(ord)}
+          isManager={isManager}
+        />
+      )}
 
-      <ManageSuppliersModal
-        isOpen={suppliersModalOpen}
-        onClose={() => setSuppliersModalOpen(false)}
-        suppliers={suppliers}
-        onSaveSuppliers={(updated) => {
-          setSuppliers(updated);
-          saveSuppliers(updated);
-          apiSaveSuppliers(updated).catch((e) => console.error('Save suppliers error:', e));
-        }}
-        isManager={isManager}
-      />
+      {suppliersModalOpen && (
+        <ManageSuppliersModal
+          isOpen={suppliersModalOpen}
+          onClose={() => setSuppliersModalOpen(false)}
+          suppliers={suppliers}
+          onSaveSuppliers={(updated) => {
+            setSuppliers(updated);
+            saveSuppliers(updated);
+            apiSaveSuppliers(updated).catch((e) => console.error('Save suppliers error:', e));
+          }}
+          isManager={isManager}
+        />
+      )}
 
-      <ManageProductsModal
-        isOpen={productsModalOpen}
-        onClose={() => setProductsModalOpen(false)}
-        products={products}
-        suppliers={suppliers}
-        onSaveProducts={(updated) => {
-          setProducts(updated);
-          saveProducts(updated);
-          apiSaveProducts(updated).catch((e) => console.error('Save products error:', e));
-        }}
-        isManager={isManager}
-      />
+      {productsModalOpen && (
+        <ManageProductsModal
+          isOpen={productsModalOpen}
+          onClose={() => setProductsModalOpen(false)}
+          products={products}
+          suppliers={suppliers}
+          onSaveProducts={(updated) => {
+            setProducts(updated);
+            saveProducts(updated);
+            apiSaveProducts(updated).catch((e) => console.error('Save products error:', e));
+          }}
+          isManager={isManager}
+        />
+      )}
 
       {/* Printable Sheet View */}
       {printOrder && (
@@ -693,20 +705,24 @@ export default function App() {
       )}
 
       {/* Vercel Postgres Setup Guide Modal */}
-      <VercelPostgresGuideModal
-        isOpen={dbGuideOpen}
-        onClose={() => setDbGuideOpen(false)}
-        isConnected={Boolean(dbStatus?.connected)}
-      />
+      {dbGuideOpen && (
+        <VercelPostgresGuideModal
+          isOpen={dbGuideOpen}
+          onClose={() => setDbGuideOpen(false)}
+          isConnected={Boolean(dbStatus?.connected)}
+        />
+      )}
 
       {/* Import Excel Modal */}
-      <ImportExcelModal
-        isOpen={importExcelModalOpen}
-        onClose={() => setImportExcelModalOpen(false)}
-        suppliers={suppliers}
-        products={products}
-        onImportSuccess={handleImportSuccess}
-      />
+      {importExcelModalOpen && (
+        <ImportExcelModal
+          isOpen={importExcelModalOpen}
+          onClose={() => setImportExcelModalOpen(false)}
+          suppliers={suppliers}
+          products={products}
+          onImportSuccess={handleImportSuccess}
+        />
+      )}
     </div>
   );
 }

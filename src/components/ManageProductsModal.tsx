@@ -20,8 +20,6 @@ export const ManageProductsModal: React.FC<ManageProductsModalProps> = ({
   onSaveProducts,
   isManager,
 }) => {
-  if (!isOpen) return null;
-
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
   const [unit, setUnit] = useState('Thùng');
@@ -88,6 +86,8 @@ export const ManageProductsModal: React.FC<ManageProductsModalProps> = ({
       p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.code.toLowerCase().includes(search.toLowerCase())
   );
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">

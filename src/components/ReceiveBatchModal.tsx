@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Truck, 
   CheckCircle2, 
@@ -32,9 +32,7 @@ export const ReceiveBatchModal: React.FC<ReceiveBatchModalProps> = ({
   onClose,
   onSubmit,
 }) => {
-  if (!isOpen || !order) return null;
-
-  const nextBatchNumber = (order.deliveries?.length || 0) + 1;
+  const nextBatchNumber = (order?.deliveries?.length || 0) + 1;
   const todayStr = new Date().toISOString().split('T')[0];
 
   const [deliveryDate, setDeliveryDate] = useState(todayStr);
@@ -45,14 +43,30 @@ export const ReceiveBatchModal: React.FC<ReceiveBatchModalProps> = ({
   // State for quantities received in this batch
   const [receivedQtyMap, setReceivedQtyMap] = useState<Record<string, number>>(() => {
     const initMap: Record<string, number> = {};
-    order.items.forEach((it) => {
-      // Default to 0 or remaining quantity if only 1 item
-      initMap[it.id] = 0;
-    });
+    if (order?.items) {
+      order.items.forEach((it) => {
+        initMap[it.id] = 0;
+      });
+    }
     return initMap;
   });
 
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen && order) {
+      setDeliveryDate(new Date().toISOString().split('T')[0]);
+      setReceiverName('Thủ kho trực ban');
+      setDeliveryDocCode('');
+      setNote('');
+      setError(null);
+      const initMap: Record<string, number> = {};
+      order.items?.forEach((it) => {
+        initMap[it.id] = 0;
+      });
+      setReceivedQtyMap(initMap);
+    }
+  }, [isOpen, order]);
 
   const handleQtyChange = (itemId: string, value: string) => {
     setError(null);
@@ -72,6 +86,7 @@ export const ReceiveBatchModal: React.FC<ReceiveBatchModalProps> = ({
   };
 
   const handleFillAllRemaining = () => {
+    if (!order) return;
     setError(null);
     const updated: Record<string, number> = {};
     order.items.forEach((it) => {
@@ -81,6 +96,7 @@ export const ReceiveBatchModal: React.FC<ReceiveBatchModalProps> = ({
   };
 
   const handleClearAll = () => {
+    if (!order) return;
     const updated: Record<string, number> = {};
     order.items.forEach((it) => {
       updated[it.id] = 0;
@@ -92,22 +108,27 @@ export const ReceiveBatchModal: React.FC<ReceiveBatchModalProps> = ({
   const totalIncomingUnits = Object.values(receivedQtyMap).reduce((sum, v) => sum + v, 0);
 
   // Projected fulfillment after this batch
-  const projectedTotalReceived = order.items.reduce((sum, it) => {
-    const batchQty = receivedQtyMap[it.id] || 0;
-    return sum + Math.min(it.quantityOrdered, it.receivedQuantity + batchQty);
-  }, 0);
+  const projectedTotalReceived = order?.items
+    ? order.items.reduce((sum, it) => {
+        const batchQty = receivedQtyMap[it.id] || 0;
+        return sum + Math.min(it.quantityOrdered, it.receivedQuantity + batchQty);
+      }, 0)
+    : 0;
 
-  const projectedRate = order.totalOrderedQuantity > 0
+  const projectedRate = order && order.totalOrderedQuantity > 0
     ? Math.min(100, Math.round((projectedTotalReceived / order.totalOrderedQuantity) * 1000) / 10)
     : 0;
 
-  const willBe100Percent = order.items.every((it) => {
-    const batchQty = receivedQtyMap[it.id] || 0;
-    return (it.receivedQuantity + batchQty) >= it.quantityOrdered;
-  });
+  const willBe100Percent = order?.items
+    ? order.items.every((it) => {
+        const batchQty = receivedQtyMap[it.id] || 0;
+        return (it.receivedQuantity + batchQty) >= it.quantityOrdered;
+      })
+    : false;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!order) return;
     setError(null);
 
     if (totalIncomingUnits <= 0) {
@@ -143,6 +164,8 @@ export const ReceiveBatchModal: React.FC<ReceiveBatchModalProps> = ({
     });
     onClose();
   };
+
+  if (!isOpen || !order) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">

@@ -43,8 +43,6 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
   onQuickAddSupplier,
   onQuickAddProduct,
 }) => {
-  if (!isOpen) return null;
-
   // Auto-generate PO number
   const today = new Date();
   const dateCode = today.toISOString().slice(0, 10).replace(/-/g, '');
@@ -62,6 +60,40 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
   const [expectedDeliveryDate, setExpectedDeliveryDate] = useState(defaultExpectedDateStr);
   const [notes, setNotes] = useState('');
   const [createdBy, setCreatedBy] = useState('Quản lý Mua hàng');
+
+  useEffect(() => {
+    if (isOpen) {
+      const curToday = new Date();
+      const curDateCode = curToday.toISOString().slice(0, 10).replace(/-/g, '');
+      const curRandomSuffix = Math.floor(100 + Math.random() * 900);
+      setPoNumber(`PO-${curDateCode}-${curRandomSuffix}`);
+      const supId = suppliers[0]?.id || '';
+      setSelectedSupplierId(supId);
+      setOrderDate(curToday.toISOString().split('T')[0]);
+      const curNextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      setExpectedDeliveryDate(curNextWeek.toISOString().split('T')[0]);
+      setNotes('');
+      setCreatedBy('Quản lý Mua hàng');
+      setError(null);
+      const initialProd = products.find((p) => p.supplierId === supId) || products[0];
+      if (initialProd) {
+        setLines([
+          {
+            id: `line-${Date.now()}`,
+            productId: initialProd.id,
+            productCode: initialProd.code,
+            productName: initialProd.name,
+            unit: initialProd.unit,
+            quantityOrdered: 100,
+            unitPrice: initialProd.defaultPrice,
+            totalAmount: 100 * initialProd.defaultPrice,
+          },
+        ]);
+      } else {
+        setLines([]);
+      }
+    }
+  }, [isOpen]);
 
   // Quick add supplier inline modal / state
   const [showQuickAddSupplier, setShowQuickAddSupplier] = useState(false);
@@ -279,6 +311,8 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
   };
 
   const selectedSupplierObj = suppliers.find((s) => s.id === selectedSupplierId);
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">

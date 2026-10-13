@@ -23,8 +23,20 @@ export const PinModal: React.FC<PinModalProps> = ({
   const [showPin, setShowPin] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  if (!isOpen) return null;
+  React.useEffect(() => {
+    if (isOpen) {
+      setCurrentMode(mode);
+      setPin('');
+      setOldPin('');
+      setNewPin('');
+      setConfirmNewPin('');
+      setError(null);
+      setSuccessMsg(null);
+      setLoading(false);
+    }
+  }, [isOpen, mode]);
 
   const handleKeyPress = (digit: string) => {
     setError(null);
@@ -47,8 +59,6 @@ export const PinModal: React.FC<PinModalProps> = ({
     setError(null);
     setPin('');
   };
-
-  const [loading, setLoading] = useState(false);
 
   const handleLoginSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -142,6 +152,8 @@ export const PinModal: React.FC<PinModalProps> = ({
       setLoading(false);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs transition-opacity">
